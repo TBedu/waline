@@ -538,12 +538,10 @@ module.exports = class extends think.Service {
 
 内容：
 {{self.comment}}
-
-========================
-
 {% if parent %}
-该评论回复了：
-原评论者：{{parent.nick}}
+========================
+回复信息：
+原评论者：{{parent.nick}} ({{parent.mail}})
 原评论内容：
 {{parent.comment}}
 {% endif %}
