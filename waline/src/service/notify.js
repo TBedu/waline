@@ -532,7 +532,7 @@ module.exports = class extends think.Service {
     const template = AKAMS_TEMPLATE || 
       `【新评论通知】{{site.name}}
 ========================
-💬 评论者：{{self.nick}} ({{self.mail}})
+💬 评论者：{{self.nick}}{% if self.mail %} ({{self.mail}}){% endif %}
 📍 归属地：{{self.addr}}
 💻 设备：{{self.os}} / {{self.browser}}
 
@@ -540,12 +540,11 @@ module.exports = class extends think.Service {
 {{self.comment}}
 {% if parent %}
 ========================
-回复信息：
-原评论者：{{parent.nick}} ({{parent.mail}})
+此评论回复了：
+原评论者：{{parent.nick}}{% if parent.mail %} ({{parent.mail}}){% endif %}
 原评论内容：
 {{parent.comment}}
 {% endif %}
-
 查看完整内容：{{site.postUrl}}`;
 
     // 渲染模板
