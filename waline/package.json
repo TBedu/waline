@@ -1,17 +1,19 @@
 {
-  "name": "waline_akams",
-  "version": "1.0.0",
-  "description": "waline 修改版，自用",
+  "name": "@waline/vercel",
+  "version": "1.32.3",
+  "description": "vercel server for waline comment system",
   "keywords": [
-    "akams"
+    "waline",
+    "vercel",
+    "comment",
+    "blog"
   ],
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TBedu/waline.git",
+    "url": "https://github.com/walinejs/waline",
     "directory": "packages/server"
   },
   "license": "MIT",
-  "author": "tbedu <2877181146@qq.com>",
+  "author": "lizheming <i@imnerd.org>",
   "dependencies": {
     "@cloudbase/node-sdk": "^3.3.7",
     "@koa/cors": "^5.0.0",
@@ -53,10 +55,6 @@
   },
   "engines": {
     "node": ">=16"
-  },
-  "main": "vanilla.js",
-  "scripts": {
-    "start": "node vanilla.js"
   },
   "publishConfig": {
     "provenance": true
