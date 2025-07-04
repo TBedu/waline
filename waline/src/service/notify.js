@@ -530,13 +530,25 @@ module.exports = class extends think.Service {
 
     // 使用自定义模板或默认模板
     const template = AKAMS_TEMPLATE || 
-      `💬 {{site.name|safe}} 有新评论啦
-      {{self.nick}} 评论道:
-      {{self.comment}}
-      邮箱: {{self.mail}}
-      状态: {{self.status}}
-      仅供评论预览，查看完整內容:
-      {{site.postUrl}}`;
+      `【新评论通知】{{site.name}}
+========================
+💬 评论者：{{self.nick}} ({{self.mail}})
+📍 归属地：{{self.addr}}
+💻 设备：{{self.os}} / {{self.browser}}
+
+内容：
+{{self.comment}}
+
+========================
+
+{% if parent %}
+该评论回复了：
+原评论者：{{parent.nick}}
+原评论内容：
+{{parent.comment}}
+{% endif %}
+
+查看完整内容：{{site.postUrl}}`;
 
     // 渲染模板
     const renderedBody = nunjucks.renderString(template, data);
