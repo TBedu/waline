@@ -3,6 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "waline_akams": "file:./waline_akams-1.0.0.tgz"
+    "waline_akams": "file:./waline_akams"
   }
 }

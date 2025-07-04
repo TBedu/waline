@@ -1,0 +1,84 @@
+{
+  "port": 8360,
+  "workers": 1,
+  "stickyCluster": false,
+  "startServerTimeout": 3000,
+  "reloadSignal": "SIGUSR2",
+  "processKillTimeout": 10000,
+  "jsonpCallbackField": "callback",
+  "jsonContentType": "application/json",
+  "jsonpContentType": "application/javascript",
+  "errnoField": "errno",
+  "errmsgField": "errmsg",
+  "defaultErrno": 1000,
+  "validateDefaultErrno": 1001,
+  "storage": "mysql",
+  "jwtKey": "K2xaGjtAQX82YbAj",
+  "forbiddenWords": [],
+  "disallowIPList": [],
+  "levels": false,
+  "avatarProxy": "",
+  "oauthUrl": "https://oauth.lithub.cc",
+  "markdown": {
+    "config": {},
+    "plugin": {
+      "emoji": true,
+      "sub": true,
+      "sup": true,
+      "tex": "mathjax",
+      "mathjax": {},
+      "katex": {}
+    }
+  },
+  "model": {
+    "type": "mysql",
+    "mongo": {
+      "logSql": true,
+      "host": "127.0.0.1",
+      "port": 27017,
+      "options": {}
+    },
+    "postgresql": {
+      "logSql": true,
+      "host": "127.0.0.1",
+      "port": "3211",
+      "connectionLimit": 1,
+      "prefix": "wl_",
+      "ssl": null
+    },
+    "sqlite": {
+      "logSql": true,
+      "database": "waline",
+      "connectionLimit": 1,
+      "prefix": "wl_"
+    },
+    "mysql": {
+      "logSql": true,
+      "dateStrings": true,
+      "host": "106.75.215.203",
+      "port": "3306",
+      "database": "waline",
+      "user": "waline",
+      "password": "K2xaGjtAQX82YbAj",
+      "prefix": "wl_",
+      "charset": "utf8mb4",
+      "ssl": null
+    },
+    "tidb": {
+      "logSql": true,
+      "dateStrings": true,
+      "host": "127.0.0.1",
+      "port": "4000",
+      "prefix": "wl_",
+      "charset": "utf8mb4",
+      "ssl": {
+        "minVersion": "TLSv1.2",
+        "rejectUnauthorized": true
+      }
+    }
+  },
+  "logger": {
+    "type": "console",
+    "console": {}
+  }
+}
