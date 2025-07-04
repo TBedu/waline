@@ -5,7 +5,7 @@ module.exports = function () {
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Waline Management System</title>
+    <title>Waline 管理系统</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
