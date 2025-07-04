@@ -1,4 +1,4 @@
-const Application = require('waline_akams');
+const Application = require('waline_akams').default;
 
 module.exports = Application({
   plugins: [],
