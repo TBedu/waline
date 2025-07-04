@@ -10,6 +10,7 @@ module.exports = class extends think.Controller {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Waline 评论系统</title>
+      <link rel="icon" href="https://waline.js.org/favicon.ico">
     </head>
     <body>
       <div id="waline" style="max-width: 800px;margin: 0 auto;"></div>
