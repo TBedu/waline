@@ -533,7 +533,7 @@ module.exports = class extends think.Service {
       `【新评论通知】{{site.name}}
 ========================
 💬 评论者：{{self.nick}}{% if self.mail %} ({{self.mail}}){% endif %}
-📍 归属地：{{self.addr}}
+📍 归属地：{% if self.addr %}{{self.addr}}{% else %}未知{% endif %}
 💻 设备：{{self.os}} / {{self.browser}}
 
 内容：
@@ -544,8 +544,7 @@ module.exports = class extends think.Service {
 原评论者：{{parent.nick}}{% if parent.mail %} ({{parent.mail}}){% endif %}
 原评论内容：
 {{parent.comment}}
-{% endif %}
-查看完整内容：{{site.postUrl}}`;
+{% endif %}`;
 
     // 渲染模板
     const renderedBody = nunjucks.renderString(template, data);
