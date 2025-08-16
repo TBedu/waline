@@ -53,7 +53,7 @@ jobs:
         uses: docker/build-push-action@v6.14.0
         with:
           context: .
-          file: Dockerfile
+          file: waline/Dockerfile
           push: true
           tags: ${{ steps.set-tag.outputs.TAGS }}
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
