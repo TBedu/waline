@@ -536,14 +536,15 @@ module.exports = class extends think.Service {
 📍 归属地：{% if self.addr %}{{self.addr}}{% else %}未知{% endif %}
 💻 设备：{{self.os}} / {{self.browser}}
 
+状态：{{self.status}}
 内容：
-{{self.comment}}
+{% if self.status != 'approved' %}疑似垃圾评论，请前往站点查看{% else %}{{self.comment}}{% endif %}
 {% if parent %}
 ========================
-此评论回复了：
-原评论者：{{parent.nick}}{% if parent.mail %} ({{parent.mail}}){% endif %}
-原评论内容：
-{{parent.comment}}
+此评论回复了：{{parent.nick}}{% if parent.mail %} ({{parent.mail}}){% endif %}
+状态：{{parent.status}}
+内容：
+{% if parent.status != 'approved' %}疑似垃圾评论，请前往站点查看{% else %}{{parent.comment}}{% endif %}
 {% endif %}`;
 
     // 渲染模板

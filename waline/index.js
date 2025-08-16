@@ -6,7 +6,14 @@ const Loader = require('thinkjs/lib/loader');
 
 module.exports = function (configParams = {}) {
   const { env, ...config } = configParams;
-
+  
+  // 从环境变量中读取违禁词，多个用英文逗号隔开
+  // 如果环境变量未配置，则不启用违禁词检测
+  const forbiddenWordsEnv = process.env.FORBIDDEN_WORDS;
+  if (forbiddenWordsEnv) {
+    config.forbiddenWords = forbiddenWordsEnv.split(',').map(word => word.trim()).filter(word => word.length > 0);
+  }
+  
   const app = new Application({
     ROOT_PATH: __dirname,
     APP_PATH: path.join(__dirname, 'src'),
