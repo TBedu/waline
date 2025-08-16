@@ -13,19 +13,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       
-      - name: Read version from VERSION.txt
-        id: version
-        run: |
-          VERSION=$(cat VERSION.txt)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          
       - name: Set Docker image tag
         id: set-tag
         run: |
           SHORT_SHA=${{ github.sha }}
           SHORT_SHA=${SHORT_SHA:0:7}  # 获取Git提交哈希的简写
           echo "IMAGE_NAME=waline" >> $GITHUB_OUTPUT
-          echo "TAGS=crpi-5gaavsu26u802w5w.cn-hangzhou.personal.cr.aliyuncs.com/tbedu/waline:${{ steps.version.outputs.VERSION }},crpi-5gaavsu26u802w5w.cn-hangzhou.personal.cr.aliyuncs.com/tbedu/waline:$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "TAGS=crpi-5gaavsu26u802w5w.cn-hangzhou.personal.cr.aliyuncs.com/tbedu/waline:$SHORT_SHA" >> $GITHUB_OUTPUT
 
       - name: Set up Docker QEMU
         uses: docker/setup-qemu-action@v3
