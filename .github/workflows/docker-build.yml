@@ -56,4 +56,4 @@ jobs:
           file: waline/Dockerfile
           push: true
           tags: ${{ steps.set-tag.outputs.TAGS }}
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          platforms: linux/amd64
