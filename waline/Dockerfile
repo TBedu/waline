@@ -1,7 +1,7 @@
 # https://github.com/nodejs/LTS
 FROM node:lts AS build
 WORKDIR /app
-ENV NODE_ENV production
+ENV NODE_ENV=production
 RUN set -eux; \
 	# npm config set registry https://registry.npmmirror.com; \
 	npm install --production --silent @waline/vercel \
@@ -14,8 +14,8 @@ COPY waline/src/middleware/dashboard.js ./node_modules/@waline/vercel/src/middle
 
 FROM node:lts-slim
 WORKDIR /app
-ENV TZ Asia/Shanghai
-ENV NODE_ENV production
+ENV TZ=Asia/Shanghai
+ENV NODE_ENV=production
 COPY --from=build /app .
 EXPOSE 8360
 CMD ["node", "node_modules/@waline/vercel/vanilla.js"]
