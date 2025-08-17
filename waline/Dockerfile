@@ -5,7 +5,8 @@ ENV NODE_ENV=production
 RUN set -eux; \
 	# npm config set registry https://registry.npmmirror.com; \
 	npm install --production --silent @waline/vercel \
-	npm install --production --silent @waline-plugins/tencent-tms
+	npm install --production --silent @waline-plugins/tencent-tms \
+	npm install --production --silent waline-plugin-llm-reviewer
 
 COPY waline/index.js ./node_modules/@waline/vercel/index.js
 COPY waline/src/service/notify.js ./node_modules/@waline/vercel/src/service/notify.js

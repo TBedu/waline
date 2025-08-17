@@ -5,6 +5,8 @@ const Application = require('thinkjs');
 const Loader = require('thinkjs/lib/loader');
 // 导入腾讯云内容安全插件
 const TencentTMS = require('@waline-plugins/tencent-tms');
+// 导入GPTReviewer插件
+const GPTReviewer = require('waline-plugin-llm-reviewer');
 
 
 module.exports = function (configParams = {}) {
@@ -28,8 +30,26 @@ module.exports = function (configParams = {}) {
         region: process.env.TENCENT_REGION || 'ap-beijing'
       })
     ];
-  } else {
-    config.plugins = [];
+  } else if (tencentSecretId || tencentSecretKey) {
+    // 腾讯云内容安全插件未配置完整
+    console.info('TencentTMS plugin not enabled: Missing required environment variables. Required: TENCENT_SECRET_ID, TENCENT_SECRET_KEY');
+  }
+  // 配置GPTReviewer插件
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL;
+  const openaiModel = process.env.OPENAI_MODEL;
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (openaiBaseUrl && openaiModel && openaiApiKey) {
+    config.plugins.push(
+      GPTReviewer({
+        openaiBaseUrl: openaiBaseUrl,
+        openaiModel: openaiModel,
+        openaiApiKey: openaiApiKey,
+        openaiPrompt: process.env.OPENAI_PROMPT // 可选参数
+      })
+    );
+  } else if (openaiBaseUrl || openaiModel || openaiApiKey) {
+    // 部分必填环境变量缺失
+    console.info('GPTReviewer plugin not enabled: Missing required environment variables. Required: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY');
   }
   const app = new Application({
     ROOT_PATH: __dirname,
