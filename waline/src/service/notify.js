@@ -536,15 +536,15 @@ module.exports = class extends think.Service {
 📍 归属地：{% if self.addr %}{{self.addr}}{% else %}未知{% endif %}
 💻 设备：{{self.os}} / {{self.browser}}
 
-状态：{{self.status}}
+状态：{% if self.status == 'approved' %}审核通过{% elif self.status == 'waiting' %}等待审核{% elif self.status == 'spam' %}垃圾评论{% else %}{{self.status}}{% endif %}
 内容：
-{% if self.status != 'approved' %}疑似垃圾评论，请前往站点查看{% else %}{{self.comment}}{% endif %}
+{% if self.status == 'approved' %}{{self.comment}}{% elif self.status == 'waiting' %}评论等待审核，请前往站点查看{% elif self.status == 'spam' %}垃圾评论，请前往站点查看{% endif %}
 {% if parent %}
 ========================
 此评论回复了：{{parent.nick}}{% if parent.mail %} ({{parent.mail}}){% endif %}
-状态：{{parent.status}}
+状态：{% if parent.status == 'approved' %}审核通过{% elif parent.status == 'waiting' %}等待审核{% elif parent.status == 'spam' %}垃圾评论{% else %}{{parent.status}}{% endif %}
 内容：
-{% if parent.status != 'approved' %}疑似垃圾评论，请前往站点查看{% else %}{{parent.comment}}{% endif %}
+{% if parent.status == 'approved' %}{{parent.comment}}{% elif parent.status == 'waiting' %}评论等待审核，请前往站点查看{% elif parent.status == 'spam' %}垃圾评论，请前往站点查看{% endif %}
 {% endif %}`;
 
     // 渲染模板
