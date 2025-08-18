@@ -40,7 +40,7 @@ if (openaiBaseUrl && openaiModel && openaiApiKey) {
       openaiBaseUrl: openaiBaseUrl,
       openaiModel: openaiModel,
       openaiApiKey: openaiApiKey,
-      openaiPrompt: process.env.OPENAI_PROMPT || 'This is a comment review:' // 可选参数
+      openaiPrompt: process.env.OPENAI_PROMPT // 可选参数
     })
   );
 } else if (openaiBaseUrl || openaiModel || openaiApiKey) {
