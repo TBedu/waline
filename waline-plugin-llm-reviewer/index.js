@@ -37,7 +37,6 @@ module.exports = function ({ openaiBaseUrl, openaiModel, openaiApiKey, openaiPro
       if (data && data.choices && data.choices.length > 0) {
         console.log('openaiPrompt', openaiPrompt);
         console.log('llm response', data.choices[0].message);
-        // 去除content字段末尾的换行符和空白字符
         return data.choices[0].message.content.trim();
       } else {
         return 'waiting';
