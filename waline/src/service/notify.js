@@ -535,8 +535,8 @@ module.exports = class extends think.Service {
 💬 评论者：{{self.nick}}{% if self.mail %} ({{self.mail}}){% endif %}
 📍 归属地：{% if self.addr %}{{self.addr}}{% else %}未知{% endif %}
 💻 设备：{{self.os}} / {{self.browser}}
+📋 状态：{% if self.status == 'approved' %}审核通过{% elif self.status == 'waiting' %}等待审核{% elif self.status == 'spam' %}垃圾评论{% else %}{{self.status}}{% endif %}
 
-状态：{% if self.status == 'approved' %}审核通过{% elif self.status == 'waiting' %}等待审核{% elif self.status == 'spam' %}垃圾评论{% else %}{{self.status}}{% endif %}
 内容：
 {% if self.status == 'approved' %}{{self.comment}}{% elif self.status == 'waiting' %}评论等待审核，请前往站点查看{% elif self.status == 'spam' %}垃圾评论，请前往站点查看{% endif %}
 {% if parent %}
