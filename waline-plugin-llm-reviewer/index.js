@@ -50,6 +50,12 @@ module.exports = function ({ openaiBaseUrl, openaiModel, openaiApiKey, openaiPro
           const isAdmin = userInfo.type === 'administrator';
           // ignore admin comment
           if (isAdmin) {
+            console.log('管理员评论，跳过AI审查');
+            return;
+          }
+          // 当评论状态已经为spam或waiting时，跳过AI审查
+          if (data.status === 'spam' || data.status === 'waiting') {
+            console.log('评论状态已为spam或waiting，跳过AI审查');
             return;
           }
   
