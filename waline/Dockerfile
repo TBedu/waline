@@ -14,6 +14,8 @@ COPY waline/src/service/notify.js ./node_modules/@waline/vercel/src/service/noti
 COPY waline/src/controller/index.js ./node_modules/@waline/vercel/src/controller/index.js
 COPY waline/src/middleware/dashboard.js ./node_modules/@waline/vercel/src/middleware/dashboard.js
 
+COPY waline/llm-reviewer.js ./node_modules/waline-plugin-llm-reviewer/index.js
+
 FROM node:lts-slim
 WORKDIR /app
 ENV TZ=Asia/Shanghai
