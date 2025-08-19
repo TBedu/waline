@@ -3,12 +3,27 @@ module.exports = function ({ openaiBaseUrl, openaiModel, openaiApiKey, openaiPro
       return {};
     }
   
+//    if (!openaiPrompt) {
+//      openaiPrompt = 'You are a review bot. Your task is to review the comments according to following rules: \
+//      1. Any contact information should not be included, including qq number, email, phone number, etc. \
+//      2. Any content with advertising or sensitive information should not be included. \
+//      3. Any other content that is not suitable for public display should not be included. \
+//      4. Output should be a single word(approved/spam). \
+//      ';
+//    }
+ 
     if (!openaiPrompt) {
-      openaiPrompt = 'You are a review bot. Your task is to review the comments according to following rules: \
-      1. Any contact information should not be included, including qq number, email, phone number, etc. \
-      2. Any content with advertising or sensitive information should not be included. \
-      3. Any other content that is not suitable for public display should not be included. \
-      4. Output should be a single word(approved/spam). \
+      openaiPrompt = 'You are a comment moderator for Github Proxy - a file proxy acceleration service. Strictly review comments using these rules: \
+      1. Always mark as "spam" for ANY mention of national political figures, political parties, or sensitive historical events - especially involving China. \
+      2. Mark as "spam" for contact information (QQ/email/phone/links/QR codes). \
+      3. Mark as "spam" for advertisements (products/paid services/brand promotions). \
+      4. Mark as "spam" for abusive content (insults/threats/discrimination). \
+      5. Mark as "spam" for illegal content (hacking tools/piracy/restricted software). \
+      6. Mark as "spam" for completely unrelated topics (dating/games/off-topic). \
+      7. Mark as "approved" for service feedback (speed/connection/file download issues). \
+      8. Mark as "approved" for technical discussions (API/Git Clone/Releases/Raw file acceleration). \
+      9. For unmentioned cases: Approve if normal person would consider it reasonable service discussion, otherwise reject. \
+      Output should be a single word(approved/spam). \
       ';
     }
   
