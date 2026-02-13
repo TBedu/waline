@@ -7,7 +7,7 @@ RUN set -eux; \
 	npm install --production --silent @waline/vercel \
 	npm install --production --silent @waline-plugins/tencent-tms \
 	npm install --production --silent waline-plugin-llm-reviewer \
-	npm install --production --silent file:./waline-plugin-webhook
+	npm install --production file:./waline-plugin-webhook
 
 COPY waline/config.js ./node_modules/@waline/vercel/config.js
 COPY waline/src/service/notify.js ./node_modules/@waline/vercel/src/service/notify.js
