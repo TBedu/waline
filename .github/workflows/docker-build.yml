@@ -13,9 +13,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       
-      - name: Copy webhook plugin to waline directory
+      - name: Pack webhook plugin
         run: |
-          cp -r waline-plugin-webhook waline/
+          cd waline-plugin-webhook
+          npm pack
+          mv waline-plugin-webhook-*.tgz ../
       
       - name: Set Docker image tag
         id: set-tag
