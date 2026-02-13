@@ -21,7 +21,6 @@ const {
   DISABLE_REGION,
   AVATAR_PROXY,
   GITHUB_TOKEN,
-  DETA_PROJECT_KEY,
   OAUTH_URL,
 
   MARKDOWN_CONFIG = '{}',
@@ -74,9 +73,6 @@ if (LEAN_KEY) {
 } else if (think.env === 'cloudbase' || TCB_ENV) {
   storage = 'cloudbase';
   jwtKey = jwtKey || TENCENTCLOUD_SECRETKEY || TCB_KEY || TCB_ENV;
-} else if (DETA_PROJECT_KEY) {
-  storage = 'deta';
-  jwtKey = jwtKey || DETA_PROJECT_KEY;
 }
 
 if (think.env === 'cloudbase' && storage === 'sqlite') {
@@ -85,8 +81,7 @@ if (think.env === 'cloudbase' && storage === 'sqlite') {
 
 const forbiddenWords = FORBIDDEN_WORDS ? FORBIDDEN_WORDS.split(/\s*,\s*/) : [];
 
-const isFalse = (content) =>
-  content && ['0', 'false'].includes(content.toLowerCase());
+const isFalse = (content) => content && ['0', 'false'].includes(content.toLowerCase());
 
 const markdown = {
   config: JSON.parse(MARKDOWN_CONFIG),
@@ -105,7 +100,7 @@ if (isFalse(MARKDOWN_HIGHLIGHT)) markdown.config.highlight = false;
 let avatarProxy = '';
 
 if (AVATAR_PROXY) {
-  avatarProxy = !isFalse(AVATAR_PROXY) ? AVATAR_PROXY : '';
+  avatarProxy = isFalse(AVATAR_PROXY) ? '' : AVATAR_PROXY;
 }
 
 const oauthUrl = OAUTH_URL || 'https://oauth.lithub.cc';
@@ -116,13 +111,10 @@ module.exports = {
   jwtKey,
   forbiddenWords,
   disallowIPList: [],
-  secureDomains: SECURE_DOMAINS ? SECURE_DOMAINS.split(/\s*,\s*/) : undefined,
+  secureDomains: SECURE_DOMAINS ? SECURE_DOMAINS.split(/\s*,\s*/) : null,
   disableUserAgent: DISABLE_USERAGENT && !isFalse(DISABLE_USERAGENT),
   disableRegion: DISABLE_REGION && !isFalse(DISABLE_REGION),
-  levels:
-    !LEVELS || isFalse(LEVELS)
-      ? false
-      : LEVELS.split(/\s*,\s*/).map((v) => Number(v)),
+  levels: !LEVELS || isFalse(LEVELS) ? false : LEVELS.split(/\s*,\s*/).map(Number),
 
   audit: COMMENT_AUDIT && !isFalse(COMMENT_AUDIT),
   avatarProxy,

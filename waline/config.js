@@ -2,6 +2,8 @@
 const TencentTMS = require('@waline-plugins/tencent-tms');
 // 导入GPTReviewer插件
 const GPTReviewer = require('waline-plugin-llm-reviewer');
+// 导入Webhook插件
+const WebhookPlugin = require('../waline-plugin-webhook');
 
 // 创建配置对象
 const config = {};
@@ -46,6 +48,22 @@ if (openaiBaseUrl && openaiModel && openaiApiKey) {
 } else if (openaiBaseUrl || openaiModel || openaiApiKey) {
   // 部分必填环境变量缺失
   console.info('GPTReviewer plugin not enabled: Missing required environment variables. Required: OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY');
+}
+
+// 配置Webhook插件
+const webhookUrl = process.env.WEBHOOK_URL;
+if (webhookUrl) {
+  if (!config.plugins) config.plugins = [];
+  config.plugins.push(
+    WebhookPlugin({
+      webhookUrl: webhookUrl,
+      webhookTemplate: process.env.WEBHOOK_TEMPLATE, // 可选参数
+      webhookHeaders: process.env.WEBHOOK_HEADERS // 可选参数
+    })
+  );
+} else if (process.env.WEBHOOK_TEMPLATE || process.env.WEBHOOK_HEADERS) {
+  // Webhook插件URL未配置
+  console.info('Webhook plugin not enabled: Missing required environment variable. Required: WEBHOOK_URL');
 }
 
 module.exports = config;
