@@ -1,4 +1,4 @@
-const Application = require('waline');
+const Application = require('@waline/vercel');
 
 module.exports = Application({
   plugins: [],

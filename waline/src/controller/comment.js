@@ -4,12 +4,13 @@ const { getMarkdownParser } = require('../service/markdown/index.js');
 
 const markdownParser = getMarkdownParser();
 
-async function formatCmt(
+// oxlint-disable-next-line max-statements
+const formatCmt = async (
   { ua, ip, ...comment },
   users = [],
   { avatarProxy, deprecated },
   loginUser,
-) {
+) => {
   ua = think.uaParser(ua);
   if (!think.config('disableUserAgent')) {
     comment.browser = `${ua.browser.name || ''}${(ua.browser.version || '')
@@ -29,13 +30,11 @@ async function formatCmt(
     comment.label = user.label;
   }
 
-  const avatarUrl = user?.avatar
-    ? user.avatar
-    : await think.service('avatar').stringify(comment);
+  const avatarUrl = user?.avatar ? user.avatar : await think.service('avatar').stringify(comment);
 
   comment.avatar =
     avatarProxy && !avatarUrl.includes(avatarProxy)
-      ? avatarProxy + '?url=' + encodeURIComponent(avatarUrl)
+      ? `${avatarProxy}?url=${encodeURIComponent(avatarUrl)}`
       : avatarUrl;
 
   const isAdmin = loginUser && loginUser.type === 'administrator';
@@ -69,7 +68,7 @@ async function formatCmt(
   delete comment.updatedAt;
 
   return comment;
-}
+};
 
 module.exports = class extends BaseRest {
   constructor(ctx) {
@@ -81,12 +80,12 @@ module.exports = class extends BaseRest {
     const { type } = this.get();
 
     const fnMap = {
-      recent: this.getRecentCommentList,
-      count: this.getCommentCount,
-      list: this.getAdminCommentList,
+      recent: this['getRecentCommentList'],
+      count: this['getCommentCount'],
+      list: this['getAdminCommentList'],
     };
 
-    const fn = fnMap[type] || this.getCommentList;
+    const fn = fnMap[type] || this['getCommentList'];
     const data = await fn.call(this);
 
     return this.jsonOrSuccess(data);
@@ -124,7 +123,7 @@ module.exports = class extends BaseRest {
 
       if (
         think.isArray(disallowIPList) &&
-        disallowIPList.length &&
+        disallowIPList.length > 0 &&
         disallowIPList.includes(data.ip)
       ) {
         think.logger.debug(`Comment IP ${data.ip} is in disallowIPList`);
@@ -144,9 +143,7 @@ module.exports = class extends BaseRest {
       });
 
       if (!think.isEmpty(duplicate)) {
-        think.logger.debug(
-          'The comment author had post same comment content before',
-        );
+        think.logger.debug('The comment author had post same comment content before');
 
         return this.fail(this.locale('Duplicate Content'));
       }
@@ -175,9 +172,9 @@ module.exports = class extends BaseRest {
       think.logger.debug(`Comment initial status is ${data.status}`);
 
       if (data.status === 'approved') {
-        const spam = await akismet(data, this.ctx.serverURL).catch((err) =>
-          console.log(err),
-        ); // ignore akismet error
+        const spam = await akismet(data, this.ctx.serverURL).catch((err) => {
+          console.log(err);
+        }); // ignore akismet error
 
         if (spam === true) {
           data.status = 'spam';
@@ -255,9 +252,7 @@ module.exports = class extends BaseRest {
 
       await notify.run(
         { ...cmtReturn, mail: resp.mail, rawComment: comment },
-        parentReturn
-          ? { ...parentReturn, mail: parentComment.mail }
-          : undefined,
+        parentReturn ? { ...parentReturn, mail: parentComment.mail } : undefined,
       );
     }
 
@@ -280,7 +275,7 @@ module.exports = class extends BaseRest {
   async putAction() {
     const { userInfo } = this.ctx.state;
     const isAdmin = userInfo.type === 'administrator';
-    let data = isAdmin ? this.post() : this.post('comment,like');
+    const data = isAdmin ? this.post() : this.post('comment,like');
     let oldData = await this.modelInstance.select({ objectId: this.id });
 
     if (think.isEmpty(oldData) || think.isEmpty(data)) {
@@ -292,8 +287,7 @@ module.exports = class extends BaseRest {
       const likeIncMax = this.config('LIKE_INC_MAX') || 1;
 
       data.like =
-        (Number(oldData.like) || 0) +
-        (data.like ? Math.ceil(Math.random() * likeIncMax) : -1);
+        (Number(oldData.like) || 0) + (data.like ? Math.ceil(Math.random() * likeIncMax) : -1);
       data.like = Math.max(data.like, 0);
     }
 
@@ -325,11 +319,7 @@ module.exports = class extends BaseRest {
       userInfo,
     );
 
-    if (
-      oldData.status === 'waiting' &&
-      data.status === 'approved' &&
-      oldData.pid
-    ) {
+    if (oldData.status === 'waiting' && data.status === 'approved' && oldData.pid) {
       let pComment = await this.modelInstance.select({
         objectId: oldData.pid,
       });
@@ -390,7 +380,7 @@ module.exports = class extends BaseRest {
     const { path: url, page, pageSize, sortBy } = this.get();
     const where = { url };
 
-    if (think.isEmpty(userInfo) || this.config('storage') === 'deta') {
+    if (think.isEmpty(userInfo)) {
       where.status = ['NOT IN', ['waiting', 'spam']];
     } else if (userInfo.type !== 'administrator') {
       where._complex = {
@@ -462,9 +452,7 @@ module.exports = class extends BaseRest {
       rootComments.forEach(({ objectId }) => {
         rootIds[objectId] = true;
       });
-      comments = comments.filter(
-        (cmt) => rootIds[cmt.objectId] || rootIds[cmt.rid],
-      );
+      comments = comments.filter((cmt) => rootIds[cmt.objectId] || rootIds[cmt.rid]);
     } else {
       comments = await this.modelInstance.select(
         { ...where, rid: undefined },
@@ -488,12 +476,10 @@ module.exports = class extends BaseRest {
     }
 
     const userModel = this.getModel('Users');
-    const user_ids = Array.from(
-      new Set(comments.map(({ user_id }) => user_id).filter((v) => v)),
-    );
+    const user_ids = [...new Set(comments.map(({ user_id }) => user_id).filter((v) => v))];
     let users = [];
 
-    if (user_ids.length) {
+    if (user_ids.length > 0) {
       users = await userModel.select(
         { objectId: ['IN', user_ids] },
         {
@@ -508,14 +494,12 @@ module.exports = class extends BaseRest {
         _complex: {},
       };
 
-      if (user_ids.length) {
+      if (user_ids.length > 0) {
         countWhere._complex.user_id = ['IN', user_ids];
       }
-      const mails = Array.from(
-        new Set(comments.map(({ mail }) => mail).filter((v) => v)),
-      );
+      const mails = [...new Set(comments.map(({ mail }) => mail).filter((v) => v))];
 
-      if (mails.length) {
+      if (mails.length > 0) {
         countWhere._complex.mail = ['IN', mails];
       }
       if (!think.isEmpty(countWhere._complex)) {
@@ -629,13 +613,11 @@ module.exports = class extends BaseRest {
     });
 
     const userModel = this.getModel('Users');
-    const user_ids = Array.from(
-      new Set(comments.map(({ user_id }) => user_id).filter((v) => v)),
-    );
+    const user_ids = [...new Set(comments.map(({ user_id }) => user_id).filter((v) => v))];
 
     let users = [];
 
-    if (user_ids.length) {
+    if (user_ids.length > 0) {
       users = await userModel.select(
         { objectId: ['IN', user_ids] },
         {
@@ -668,7 +650,7 @@ module.exports = class extends BaseRest {
     const { userInfo } = this.ctx.state;
     const where = {};
 
-    if (think.isEmpty(userInfo) || this.config('storage') === 'deta') {
+    if (think.isEmpty(userInfo)) {
       where.status = ['NOT IN', ['waiting', 'spam']];
     } else {
       where._complex = {
@@ -700,13 +682,11 @@ module.exports = class extends BaseRest {
     });
 
     const userModel = this.getModel('Users');
-    const user_ids = Array.from(
-      new Set(comments.map(({ user_id }) => user_id).filter((v) => v)),
-    );
+    const user_ids = [...new Set(comments.map(({ user_id }) => user_id).filter((v) => v))];
 
     let users = [];
 
-    if (user_ids.length) {
+    if (user_ids.length > 0) {
       users = await userModel.select(
         { objectId: ['IN', user_ids] },
         {
@@ -730,9 +710,9 @@ module.exports = class extends BaseRest {
   async getCommentCount() {
     const { url } = this.get();
     const { userInfo } = this.ctx.state;
-    const where = Array.isArray(url) && url.length ? { url: ['IN', url] } : {};
+    const where = Array.isArray(url) && url.length > 0 ? { url: ['IN', url] } : {};
 
-    if (think.isEmpty(userInfo) || this.config('storage') === 'deta') {
+    if (think.isEmpty(userInfo)) {
       where.status = ['NOT IN', ['waiting', 'spam']];
     } else {
       where._complex = {

@@ -10,8 +10,7 @@ module.exports = class extends think.Controller {
     const { code, oauth_verifier, oauth_token, type, redirect } = this.get();
     const { oauthUrl } = this.config();
 
-    const hasCode =
-      type === 'twitter' ? oauth_token && oauth_verifier : Boolean(code);
+    const hasCode = type === 'twitter' ? oauth_token && oauth_verifier : Boolean(code);
 
     if (!hasCode) {
       const { serverURL } = this.ctx;
@@ -20,12 +19,13 @@ module.exports = class extends think.Controller {
         type,
       });
 
-      return this.redirect(
+      this.redirect(
         think.buildUrl(`${oauthUrl}/${type}`, {
           redirect: redirectUrl,
           state: this.ctx.state.token || '',
         }),
       );
+      return;
     }
 
     /**
@@ -59,22 +59,22 @@ module.exports = class extends think.Controller {
 
     const userBySocial = await this.modelInstance.select({ [type]: user.id });
 
+    // when the social account has been linked, then redirect to this linked account profile page. It may be current account or another.
+    // If it's another account, user should unlink the social type in that account and then link it.
     if (!think.isEmpty(userBySocial)) {
-      const token = jwt.sign(userBySocial[0].email, this.config('jwtKey'));
+      const token = jwt.sign(userBySocial[0].objectId, this.config('jwtKey'));
 
       if (redirect) {
-        return this.redirect(think.buildUrl(redirect, { token }));
+        this.redirect(think.buildUrl(redirect, { token }));
+        return;
       }
 
       return this.success();
     }
 
-    if (!user.email) {
-      user.email = `${user.id}@mail.${type}`;
-    }
-
     const current = this.ctx.state.userInfo;
 
+    // when login user link social type, then update data
     if (!think.isEmpty(current)) {
       const updateData = { [type]: user.id };
 
@@ -86,41 +86,31 @@ module.exports = class extends think.Controller {
         objectId: current.objectId,
       });
 
-      return this.redirect('/ui/profile');
+      this.redirect('/ui/profile');
+      return;
     }
 
-    const userByEmail = await this.modelInstance.select({ email: user.email });
+    // when user has not login, then we create account by the social type!
+    const count = await this.modelInstance.count();
+    const data = {
+      display_name: user.name,
+      email: user.email,
+      url: user.url,
+      avatar: user.avatar,
+      [type]: user.id,
+      passowrd: this.hashPassword(Math.random()),
+      type: think.isEmpty(count) ? 'administrator' : 'guest',
+    };
 
-    if (think.isEmpty(userByEmail)) {
-      const count = await this.modelInstance.count();
-      const data = {
-        display_name: user.name,
-        email: user.email,
-        url: user.url,
-        avatar: user.avatar,
-        [type]: user.id,
-        password: this.hashPassword(Math.random()),
-        type: think.isEmpty(count) ? 'administrator' : 'guest',
-      };
+    await this.modelInstance.add(data);
 
-      await this.modelInstance.add(data);
-    } else {
-      const updateData = { [type]: user.id };
-
-      if (!userByEmail.avatar && user.avatar) {
-        updateData.avatar = user.avatar;
-      }
-      await this.modelInstance.update(updateData, { email: user.email });
+    if (!redirect) {
+      return this.success();
     }
 
-    const token = jwt.sign(user.email, this.config('jwtKey'));
+    // and then generate token!
+    const token = jwt.sign(user.objectId, this.config('jwtKey'));
 
-    if (redirect) {
-      return this.redirect(
-        redirect + (redirect.includes('?') ? '&' : '?') + 'token=' + token,
-      );
-    }
-
-    return this.success();
+    this.redirect(redirect + (redirect.includes('?') ? '&' : '?') + 'token=' + token);
   }
 };

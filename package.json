@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "waline": "file:./waline"
+    "@waline/vercel": "file:./waline",
+    "@waline-plugins/tencent-tms": "latest",
+    "waline-plugin-llm-reviewer": "file:./waline-plugin-llm-reviewer",
+    "waline-plugin-webhook": "file:./waline-plugin-webhook"
   }
 }

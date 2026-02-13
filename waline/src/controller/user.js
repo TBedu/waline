@@ -1,6 +1,6 @@
 const BaseRest = require('./rest.js');
 
-module.exports = class extends BaseRest {
+module.exports = class UserController extends BaseRest {
   constructor(...args) {
     super(...args);
     this.modelInstance = this.getModel('Users');
@@ -50,28 +50,17 @@ module.exports = class extends BaseRest {
       email: data.email,
     });
 
-    if (
-      !think.isEmpty(resp) &&
-      ['administrator', 'guest'].includes(resp[0].type)
-    ) {
+    if (!think.isEmpty(resp) && ['administrator', 'guest'].includes(resp[0].type)) {
       return this.fail(this.locale('USER_EXIST'));
     }
 
     const count = await this.modelInstance.count();
 
-    const {
-      SMTP_HOST,
-      SMTP_SERVICE,
-      SENDER_EMAIL,
-      SENDER_NAME,
-      SMTP_USER,
-      SITE_NAME,
-    } = process.env;
+    const { SMTP_HOST, SMTP_SERVICE, SENDER_EMAIL, SENDER_NAME, SMTP_USER, SITE_NAME } =
+      process.env;
     const hasMailService = SMTP_HOST || SMTP_SERVICE;
 
-    const token = Array.from({ length: 4 }, () =>
-      Math.round(Math.random() * 9),
-    ).join('');
+    const token = Array.from({ length: 4 }, () => Math.round(Math.random() * 9)).join('');
     const normalType = hasMailService
       ? `verify:${token}:${Date.now() + 1 * 60 * 60 * 1000}`
       : 'guest';
@@ -91,16 +80,13 @@ module.exports = class extends BaseRest {
 
     try {
       const notify = this.service('notify', this);
-      const apiUrl = think.buildUrl(this.ctx.serverURL + '/verification', {
+      const apiUrl = think.buildUrl(`${this.ctx.serverURL}/verification`, {
         token,
         email: data.email,
       });
 
       await notify.transporter.sendMail({
-        from:
-          SENDER_EMAIL && SENDER_NAME
-            ? `"${SENDER_NAME}" <${SENDER_EMAIL}>`
-            : SMTP_USER,
+        from: SENDER_EMAIL && SENDER_NAME ? `"${SENDER_NAME}" <${SENDER_EMAIL}>` : SMTP_USER,
         to: data.email,
         subject: this.locale('[{{name | safe}}] Registration Confirm Mail', {
           name: SITE_NAME || 'Waline',
@@ -125,7 +111,7 @@ module.exports = class extends BaseRest {
   }
 
   async putAction() {
-    const { display_name, url, avatar, password, type, label } = this.post();
+    const { display_name, url, avatar, password, type, label, email } = this.post();
     const { objectId } = this.ctx.state.userInfo;
     const twoFactorAuth = this.post('2fa');
 
@@ -137,6 +123,19 @@ module.exports = class extends BaseRest {
 
     if (think.isString(label)) {
       updateData.label = label;
+    }
+
+    if (email) {
+      const user = await this.modelInstance.select({
+        email,
+        objectId: ['!=', objectId],
+      });
+
+      if (!think.isEmpty(user)) {
+        return this.fail();
+      }
+
+      updateData.email = email;
     }
 
     if (display_name) {
@@ -159,7 +158,7 @@ module.exports = class extends BaseRest {
       updateData['2fa'] = twoFactorAuth;
     }
 
-    const socials = ['github', 'twitter', 'facebook', 'google', 'weibo', 'qq'];
+    const socials = this.ctx.state.oauthServices.map(({ name }) => name);
 
     socials.forEach((social) => {
       const nextSocial = this.post(social);
@@ -180,6 +179,7 @@ module.exports = class extends BaseRest {
     return this.success();
   }
 
+  // oxlint-disable-next-line max-statements
   async getUsersListByCount() {
     const { pageSize } = this.get();
     const commentModel = this.getModel('Comment');
@@ -195,13 +195,11 @@ module.exports = class extends BaseRest {
     counts.sort((a, b) => b.count - a.count);
     counts.length = Math.min(pageSize, counts.length);
 
-    const userIds = counts
-      .filter(({ user_id }) => user_id)
-      .map(({ user_id }) => user_id);
+    const userIds = counts.filter(({ user_id }) => user_id).map(({ user_id }) => user_id);
 
-    let usersMap = {};
+    const usersMap = {};
 
-    if (userIds.length) {
+    if (userIds.length > 0) {
       const users = await this.modelInstance.select({
         objectId: ['IN', userIds],
       });
@@ -223,10 +221,7 @@ module.exports = class extends BaseRest {
         let level = 0;
 
         if (user.count) {
-          const _level = think.findLastIndex(
-            this.config('levels'),
-            (l) => l <= user.count,
-          );
+          const _level = think.findLastIndex(this.config('levels'), (level) => level <= user.count);
 
           if (_level !== -1) {
             level = _level;
@@ -236,15 +231,10 @@ module.exports = class extends BaseRest {
       }
 
       if (count.user_id && users[count.user_id]) {
-        const {
-          display_name: nick,
-          url: link,
-          avatar: avatarUrl,
-          label,
-        } = users[count.user_id];
+        const { display_name: nick, url: link, avatar: avatarUrl, label } = users[count.user_id];
         const avatar =
           avatarProxy && !avatarUrl.includes(avatarProxy)
-            ? avatarProxy + '?url=' + encodeURIComponent(avatarUrl)
+            ? `${avatarProxy}?url=${encodeURIComponent(avatarUrl)}`
             : avatarUrl;
 
         Object.assign(user, { nick, link, avatar, label });
@@ -252,15 +242,12 @@ module.exports = class extends BaseRest {
         continue;
       }
 
-      const comments = await commentModel.select(
-        { mail: count.mail },
-        { limit: 1 },
-      );
+      const comments = await commentModel.select({ mail: count.mail }, { limit: 1 });
 
       if (think.isEmpty(comments)) {
         continue;
       }
-      const comment = comments[0];
+      const [comment] = comments;
 
       if (think.isEmpty(comment)) {
         continue;
@@ -269,7 +256,7 @@ module.exports = class extends BaseRest {
       const avatarUrl = await think.service('avatar').stringify(comment);
       const avatar =
         avatarProxy && !avatarUrl.includes(avatarProxy)
-          ? avatarProxy + '?url=' + encodeURIComponent(avatarUrl)
+          ? `${avatarProxy}?url=${encodeURIComponent(avatarUrl)}`
           : avatarUrl;
 
       Object.assign(user, { nick, link, avatar });

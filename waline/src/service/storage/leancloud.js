@@ -41,12 +41,14 @@ module.exports = class extends Base {
           const handler = where[k][0].toUpperCase();
 
           switch (handler) {
-            case 'IN':
+            case 'IN': {
               instance.containedIn(k, where[k][1]);
               break;
-            case 'NOT IN':
+            }
+            case 'NOT IN': {
               instance.notContainedIn(k, where[k][1]);
               break;
+            }
             case 'LIKE': {
               const first = where[k][1][0];
               const last = where[k][1].slice(-1);
@@ -60,12 +62,14 @@ module.exports = class extends Base {
               }
               break;
             }
-            case '!=':
+            case '!=': {
               instance.notEqualTo(k, where[k][1]);
               break;
-            case '>':
+            }
+            case '>': {
               instance.greaterThan(k, where[k][1]);
               break;
+            }
           }
         }
       }
@@ -113,11 +117,11 @@ module.exports = class extends Base {
       instance.select(field);
     }
 
-    const data = await instance.find().catch((e) => {
-      if (e.code === 101) {
+    const data = await instance.find().catch((err) => {
+      if (err.code === 101) {
         return [];
       }
-      throw e;
+      throw err;
     });
 
     return data.map((item) => item.toJSON());
@@ -126,7 +130,7 @@ module.exports = class extends Base {
   async select(where, options = {}) {
     let data = [];
     let ret = [];
-    let offset = options.offset || 0;
+    const offset = options.offset ?? 0;
 
     do {
       options.offset = offset + data.length;
@@ -185,10 +189,7 @@ module.exports = class extends Base {
   }
 
   async _updateCmtGroupByMailUserIdCache(data, method) {
-    if (
-      this.tableName !== 'Comment' ||
-      !think.isArray(think.config('levels'))
-    ) {
+    if (this.tableName !== 'Comment' || !think.isArray(think.config('levels'))) {
       return;
     }
 
@@ -200,9 +201,7 @@ module.exports = class extends Base {
     const cacheData = await this.select({
       _complex: {
         _logic: 'or',
-        user_id: think.isObject(data.user_id)
-          ? data.user_id.toString()
-          : data.user_id,
+        user_id: think.isObject(data.user_id) ? data.user_id.toString() : data.user_id,
         mail: data.mail,
       },
     });
@@ -211,37 +210,38 @@ module.exports = class extends Base {
       return;
     }
 
-    let count = cacheData[0].count;
+    let { count } = cacheData[0];
 
     switch (method) {
-      case 'add':
+      case 'add': {
         if (data.status === 'approved') {
           count += 1;
         }
         break;
-      case 'udpate_status':
+      }
+      case 'udpate_status': {
         if (data.status === 'approved') {
           count += 1;
         } else {
           count -= 1;
         }
         break;
-      case 'delete':
+      }
+      case 'delete': {
         count -= 1;
         break;
+      }
     }
 
     const currentTableName = this.tableName;
 
     this.tableName = cacheTableName;
-    await this.update({ count }, { objectId: cacheData[0].objectId }).catch(
-      (e) => {
-        if (e.code === 101) {
-          return;
-        }
-        throw e;
-      },
-    );
+    await this.update({ count }, { objectId: cacheData[0].objectId }).catch((err) => {
+      if (err.code === 101) {
+        return;
+      }
+      throw err;
+    });
     this.tableName = currentTableName;
   }
 
@@ -249,22 +249,19 @@ module.exports = class extends Base {
     const instance = this.where(this.tableName, where);
 
     if (!options.group) {
-      return instance.count(options).catch((e) => {
-        if (e.code === 101) {
+      return instance.count(options).catch((err) => {
+        if (err.code === 101) {
           return 0;
         }
-        throw e;
+        throw err;
       });
     }
 
     // get group count cache by group field where data
-    const cacheData = await this._getCmtGroupByMailUserIdCache(
-      options.group.join('_'),
-      where,
-    );
+    const cacheData = await this._getCmtGroupByMailUserIdCache(options.group.join('_'), where);
 
     if (!where._complex) {
-      if (cacheData.length) {
+      if (cacheData.length > 0) {
         return cacheData;
       }
 
@@ -272,9 +269,7 @@ module.exports = class extends Base {
       const countsMap = {};
 
       for (const count of counts) {
-        const key = options.group
-          .map((item) => count[item] || undefined)
-          .join('_');
+        const key = options.group.map((item) => count[item] ?? undefined).join('_');
 
         if (!countsMap[key]) {
           countsMap[key] = {};
@@ -298,9 +293,7 @@ module.exports = class extends Base {
     const cacheDataMap = {};
 
     for (const item of cacheData) {
-      const key = options.group
-        .map((item) => item[item] || undefined)
-        .join('_');
+      const key = options.group.map((item) => item[item] ?? undefined).join('_');
 
       cacheDataMap[key] = item;
     }
@@ -328,7 +321,7 @@ module.exports = class extends Base {
               ({
                 ...groupFlatValue,
                 [groupName]: item,
-              })[item] || undefined,
+              })[item] ?? undefined,
           )
           .join('_');
 
@@ -364,19 +357,14 @@ module.exports = class extends Base {
     return [...cacheData, ...counts];
   }
 
-  async add(
-    data,
-    {
-      access: { read = true, write = true } = { read: true, write: true },
-    } = {},
-  ) {
+  async add(data, { access: { read = true, write = true } = { read: true, write: true } } = {}) {
     const Table = AV.Object.extend(this.tableName);
     const instance = new Table();
 
-    const REVERSED_KEYS = ['objectId', 'createdAt', 'updatedAt'];
+    const REVERSED_KEYS = new Set(['objectId', 'createdAt', 'updatedAt']);
 
     for (const k in data) {
-      if (REVERSED_KEYS.includes(k)) {
+      if (REVERSED_KEYS.has(k)) {
         continue;
       }
       instance.set(k, data[k]);
@@ -403,13 +391,12 @@ module.exports = class extends Base {
       ret.map(async (item) => {
         const _oldStatus = item.get('status');
 
-        const updateData =
-          typeof data === 'function' ? data(item.toJSON()) : data;
+        const updateData = typeof data === 'function' ? data(item.toJSON()) : data;
 
-        const REVERSED_KEYS = ['createdAt', 'updatedAt'];
+        const REVERSED_KEYS = new Set(['createdAt', 'updatedAt']);
 
         for (const k in updateData) {
-          if (REVERSED_KEYS.includes(k)) {
+          if (REVERSED_KEYS.has(k)) {
             continue;
           }
           item.set(k, updateData[k]);

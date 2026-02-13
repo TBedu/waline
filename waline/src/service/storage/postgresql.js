@@ -48,10 +48,8 @@ module.exports = class extends MySQL {
         const val = data[key];
 
         data[key.toLowerCase()] =
-          val instanceof Date
-            ? think.datetime(val, 'YYYY-MM-DD HH:mm:ss')
-            : val;
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          val instanceof Date ? think.datetime(val, 'YYYY-MM-DD HH:mm:ss') : val;
+        // oxlint-disable-next-line typescript/no-dynamic-delete
         delete data[key];
       });
 
@@ -64,13 +62,13 @@ module.exports = class extends MySQL {
     try {
       if (Array.isArray(result)) {
         result.forEach((r) => {
-          r.count = parseInt(r.count);
+          r.count = Number.parseInt(r.count);
         });
       } else {
-        result = parseInt(result);
+        result = Number.parseInt(result);
       }
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
 
     return result;
@@ -79,8 +77,6 @@ module.exports = class extends MySQL {
   async setSeqId(id) {
     const instance = this.model(this.tableName);
 
-    return instance.query(
-      `ALTER SEQUENCE ${instance.tableName}_seq RESTART WITH ${id};`,
-    );
+    return instance.query(`ALTER SEQUENCE ${instance.tableName}_seq RESTART WITH ${id};`);
   }
 };

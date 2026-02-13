@@ -1,43 +1,45 @@
 {
   "name": "@waline/vercel",
-  "version": "1.32.8",
+  "version": "1.37.0",
   "description": "vercel server for waline comment system",
   "keywords": [
-    "waline",
-    "vercel",
+    "blog",
     "comment",
-    "blog"
+    "vercel",
+    "waline"
   ],
+  "license": "MIT",
+  "author": "lizheming <i@imnerd.org>",
   "repository": {
     "url": "https://github.com/walinejs/waline",
     "directory": "packages/server"
   },
-  "license": "MIT",
-  "author": "lizheming <i@imnerd.org>",
+  "publishConfig": {
+    "provenance": true
+  },
   "scripts": {
     "dev": "node development.js 9090"
   },
   "dependencies": {
-    "@cloudbase/node-sdk": "^3.10.1",
+    "@cloudbase/node-sdk": "^3.18.0",
     "@koa/cors": "^5.0.0",
     "@mdit/plugin-katex": "0.23.4-cjs.0",
     "@mdit/plugin-mathjax": "0.23.4-cjs.0",
     "@mdit/plugin-sub": "0.22.5-cjs.0",
     "@mdit/plugin-sup": "0.22.5-cjs.0",
     "akismet": "^2.0.7",
-    "deta": "^2.0.0",
-    "dompurify": "^3.3.0",
-    "dy-node-ip2region": "^1.0.1",
+    "dompurify": "^3.3.1",
     "fast-csv": "^5.0.5",
-    "form-data": "^4.0.4",
+    "form-data": "^4.0.5",
+    "ip2region": "^2.3.0",
     "jsdom": "^19.0.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "koa-compose": "^4.1.0",
     "leancloud-storage": "^4.15.2",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.1.1",
     "markdown-it-emoji": "^3.0.0",
     "mathjax-full": "^3.2.2",
-    "nodemailer": "^7.0.9",
+    "nodemailer": "^8.0.1",
     "nunjucks": "^3.2.4",
     "phpass": "^0.1.1",
     "prismjs": "^1.30.0",
@@ -52,16 +54,13 @@
     "think-mongo": "^2.2.1",
     "think-router-rest": "^1.0.5",
     "thinkjs": "4.0.0-alpha.0",
-    "ua-parser-js": "^2.0.6"
+    "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {
-    "dotenv": "17.2.3",
+    "dotenv": "17.2.4",
     "think-watcher": "3.0.4"
   },
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "provenance": true
   }
 }
