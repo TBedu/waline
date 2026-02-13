@@ -4,9 +4,9 @@ WORKDIR /app
 ENV NODE_ENV="production"
 RUN set -eux; \
 	# npm config set registry https://registry.npm.taobao.org; \
-	npm install --production --silent @waline/vercel \
-	npm install --production --silent @waline-plugins/tencent-tms \
-	npm install --production --silent waline-plugin-llm-reviewer \
+	npm install --production --silent @waline/vercel; \
+	npm install --production --silent @waline-plugins/tencent-tms; \
+	npm install --production --silent waline-plugin-llm-reviewer; \
 	npm install --production file:./waline-plugin-webhook
 
 COPY waline/config.js ./node_modules/@waline/vercel/config.js
