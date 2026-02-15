@@ -1,118 +1,65 @@
-name: Sync Waline with Official Repository
+name: Build Waline image
 
 on:
-  schedule:
-    - cron: '0 0 * * 0'  # 每周日运行
-  workflow_dispatch:  # 允许手动触发
+  push:
+  pull_request:
+  workflow_dispatch:    # 允许手动触发或 API 触发
 
 jobs:
-  sync:
-    runs-on: windows-latest
-    timeout-minutes: 30
-    
+  build:
+    name: Build Waline image
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout local repository
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          path: local
-          fetch-depth: 0
-          
-      - name: Checkout official Waline repository
-        uses: actions/checkout@v4
-        with:
-          repository: walinejs/waline
-          path: official
-          ref: main
-          
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          
-      - name: Compare version numbers
-        id: compare-versions
+
+      - name: Pack webhook plugin
         run: |
-          $localVersion = Get-Content -Path "local/waline/package.json" | ConvertFrom-Json | Select-Object -ExpandProperty version
-          $officialVersion = Get-Content -Path "official/packages/server/package.json" | ConvertFrom-Json | Select-Object -ExpandProperty version
-          
-          Write-Host "Local version: $localVersion"
-          Write-Host "Official version: $officialVersion"
-          
-          if ($localVersion -ne $officialVersion) {
-            Write-Host "Versions differ, proceeding with sync"
-            echo "needs-sync=true" >> $env:GITHUB_OUTPUT
-            echo "local-version=$localVersion" >> $env:GITHUB_OUTPUT
-            echo "official-version=$officialVersion" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "Versions match, skipping sync"
-            echo "needs-sync=false" >> $env:GITHUB_OUTPUT
-          }
-        shell: pwsh
-        
-      - name: Sync files
-        if: steps.compare-versions.outputs.needs-sync == 'true'
+          cd waline-plugin-webhook
+          npm pack
+          mv waline-plugin-webhook-*.tgz ../
+      
+      - name: Set Docker image tag
+        id: set-tag
         run: |
-          # Create sync directory
-          New-Item -ItemType Directory -Path "sync" -Force
-          
-          # Copy official files to sync directory
-          Copy-Item -Path "official/packages/server/*" -Destination "sync" -Recurse -Force
-          
-          # Remove files that should not be synced
-          Remove-Item -Path "sync/Dockerfile" -Force -ErrorAction SilentlyContinue
-          Remove-Item -Path "sync/config.js" -Force -ErrorAction SilentlyContinue
-          
-          # Process dashboard.js - preserve title and icon
-          if (Test-Path "sync/src/middleware/dashboard.js") {
-            $dashboardContent = Get-Content -Path "sync/src/middleware/dashboard.js" -Raw
-            $localDashboardContent = Get-Content -Path "local/waline/src/middleware/dashboard.js" -Raw
-            
-            # Extract title and icon lines from local file
-            $titleLine = $localDashboardContent -match '<title>.*<\/title>' | ForEach-Object { $Matches[0] }
-            $iconLine = $localDashboardContent -match '<link rel="icon" href=".*">' | ForEach-Object { $Matches[0] }
-            
-            # Replace title and icon in sync file
-            if ($titleLine -and $iconLine) {
-              $dashboardContent = $dashboardContent -replace '<title>.*<\/title>', $titleLine
-              $dashboardContent = $dashboardContent -replace '<link rel="icon" href=".*">', $iconLine
-              Set-Content -Path "sync/src/middleware/dashboard.js" -Value $dashboardContent
-            }
-          }
-          
-          # Process index.js - preserve title and icon
-          if (Test-Path "sync/src/controller/index.js") {
-            $indexContent = Get-Content -Path "sync/src/controller/index.js" -Raw
-            $localIndexContent = Get-Content -Path "local/waline/src/controller/index.js" -Raw
-            
-            # Extract title and icon lines from local file
-            $titleLine = $localIndexContent -match '<title>.*<\/title>' | ForEach-Object { $Matches[0] }
-            $iconLine = $localIndexContent -match '<link rel="icon" href=".*">' | ForEach-Object { $Matches[0] }
-            
-            # Replace title and icon in sync file
-            if ($titleLine -and $iconLine) {
-              $indexContent = $indexContent -replace '<title>.*<\/title>', $titleLine
-              $indexContent = $indexContent -replace '<link rel="icon" href=".*">', $iconLine
-              Set-Content -Path "sync/src/controller/index.js" -Value $indexContent
-            }
-          }
-          
-          # Copy synced files to local directory
-          Copy-Item -Path "sync/*" -Destination "local/waline" -Recurse -Force
-          
-          # Update version in local package.json
-          $localPackageJson = Get-Content -Path "local/waline/package.json" | ConvertFrom-Json
-          $officialPackageJson = Get-Content -Path "official/packages/server/package.json" | ConvertFrom-Json
-          $localPackageJson.version = $officialPackageJson.version
-          $localPackageJson | ConvertTo-Json -Depth 100 | Set-Content -Path "local/waline/package.json"
-        shell: pwsh
-        
-      - name: Commit and push changes
-        if: steps.compare-versions.outputs.needs-sync == 'true'
-        run: |
-          cd local
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add .
-          git commit -m "Sync with official Waline repository (v${{ steps.compare-versions.outputs.official-version }})"
-          git push
+          SHORT_SHA=${{ github.sha }}
+          SHORT_SHA=${SHORT_SHA:0:7}  # 获取Git提交哈希的简写
+          echo "IMAGE_NAME=waline" >> $GITHUB_OUTPUT
+          echo "TAGS=tbeducn/waline:$SHORT_SHA,tbeducn/waline:latest" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Check for required secrets
         shell: bash
+        run: |
+          echo "Checking if DOCKER secrets are provided..."
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "Error: DOCKER_USERNAME secret is required"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "Error: DOCKER_PASSWORD secret is required"
+            exit 1
+          fi
+          echo "Secrets are provided"
+          echo "Registry: Docker Hub"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Waline image
+        uses: docker/build-push-action@v6.14.0
+        with:
+          context: .
+          file: waline/Dockerfile
+          push: true
+          tags: ${{ steps.set-tag.outputs.TAGS }}
+          platforms: linux/amd64
