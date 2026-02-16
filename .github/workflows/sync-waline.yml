@@ -117,10 +117,12 @@ jobs:
           git add .
           git commit -m "Sync with official Waline repository (v${{ steps.compare-versions.outputs.official-version }})"
           git push
+        shell: bash
 
       - name: Trigger Docker build workflow
         if: steps.compare-versions.outputs.needs-sync == 'true'
-        run: |
-          gh workflow run "Build Waline image" --ref ${{ github.ref_name }}
+        working-directory: ${{ github.workspace }}
+        run: gh workflow run "Build Waline image" --ref ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
