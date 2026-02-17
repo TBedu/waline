@@ -3,7 +3,7 @@ name: Sync Waline with Official Repository
 on:
   schedule:
     - cron: '0 0 * * 0'  # 每周日运行
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:      # 允许手动触发
 
 jobs:
   sync:
@@ -23,11 +23,6 @@ jobs:
           repository: walinejs/waline
           path: official
           ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
 
       - name: Compare version numbers
         id: compare-versions
@@ -52,58 +47,30 @@ jobs:
       - name: Sync files
         if: steps.compare-versions.outputs.needs-sync == 'true'
         run: |
-          # Create sync directory
+          # 创建同步目录
           New-Item -ItemType Directory -Path "sync" -Force
           
-          # Copy official files to sync directory
+          # 复制官方 packages/server 全部内容到 sync 目录
           Copy-Item -Path "official/packages/server/*" -Destination "sync" -Recurse -Force
           
-          # Remove files that should not be synced
+          # 删除不需要同步的文件（例如本地专用的 Dockerfile 和 config.js）
           Remove-Item -Path "sync/Dockerfile" -Force -ErrorAction SilentlyContinue
           Remove-Item -Path "sync/config.js" -Force -ErrorAction SilentlyContinue
           
-          # Process dashboard.js - preserve title and icon
-          if (Test-Path "sync/src/middleware/dashboard.js") {
-            $dashboardContent = Get-Content -Path "sync/src/middleware/dashboard.js" -Raw
-            $localDashboardContent = Get-Content -Path "local/waline/src/middleware/dashboard.js" -Raw
-            
-            # Extract title and icon lines from local file
-            $titleLine = $localDashboardContent -match '<title>.*<\/title>' | ForEach-Object { $Matches[0] }
-            $iconLine = $localDashboardContent -match '<link rel="icon" href=".*">' | ForEach-Object { $Matches[0] }
-            
-            # Replace title and icon in sync file
-            if ($titleLine -and $iconLine) {
-              $dashboardContent = $dashboardContent -replace '<title>.*<\/title>', $titleLine
-              $dashboardContent = $dashboardContent -replace '<link rel="icon" href=".*">', $iconLine
-              Set-Content -Path "sync/src/middleware/dashboard.js" -Value $dashboardContent
-            }
-          }
+          # 用本地版本完全覆盖 dashboard.js 和 index.js，保留所有定制内容
+          Copy-Item -Path "local/waline/src/middleware/dashboard.js" -Destination "sync/src/middleware/dashboard.js" -Force
+          Copy-Item -Path "local/waline/src/controller/index.js" -Destination "sync/src/controller/index.js" -Force
           
-          # Process index.js - preserve title and icon
-          if (Test-Path "sync/src/controller/index.js") {
-            $indexContent = Get-Content -Path "sync/src/controller/index.js" -Raw
-            $localIndexContent = Get-Content -Path "local/waline/src/controller/index.js" -Raw
-            
-            # Extract title and icon lines from local file
-            $titleLine = $localIndexContent -match '<title>.*<\/title>' | ForEach-Object { $Matches[0] }
-            $iconLine = $localIndexContent -match '<link rel="icon" href=".*">' | ForEach-Object { $Matches[0] }
-            
-            # Replace title and icon in sync file
-            if ($titleLine -and $iconLine) {
-              $indexContent = $indexContent -replace '<title>.*<\/title>', $titleLine
-              $indexContent = $indexContent -replace '<link rel="icon" href=".*">', $iconLine
-              Set-Content -Path "sync/src/controller/index.js" -Value $indexContent
-            }
-          }
-          
-          # Copy synced files to local directory
+          # 将 sync 所有文件复制回本地 waline 目录
           Copy-Item -Path "sync/*" -Destination "local/waline" -Recurse -Force
           
-          # Update version in local package.json
+          # 更新本地 package.json 的版本号为官方版本
           $localPackageJson = Get-Content -Path "local/waline/package.json" | ConvertFrom-Json
           $officialPackageJson = Get-Content -Path "official/packages/server/package.json" | ConvertFrom-Json
           $localPackageJson.version = $officialPackageJson.version
           $localPackageJson | ConvertTo-Json -Depth 100 | Set-Content -Path "local/waline/package.json"
+          
+          Write-Host "Sync completed. Local version updated to $($officialPackageJson.version)"
         shell: pwsh
 
       - name: Commit and push changes
@@ -112,17 +79,7 @@ jobs:
           cd local
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          # 设置远程 URL 包含 GITHUB_TOKEN 以解决权限问题
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add .
-          git commit -m "Sync with official Waline repository (v${{ steps.compare-versions.outputs.official-version }})"
+          git commit -m "chore: sync with walinejs/waline@${{ steps.compare-versions.outputs.official-version }}"
           git push
-        shell: bash
-
-      - name: Trigger Docker build workflow
-        if: steps.compare-versions.outputs.needs-sync == 'true'
-        working-directory: ${{ github.workspace }}
-        run: gh workflow run "Build Waline image" --ref ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
+        shell: pwsh
