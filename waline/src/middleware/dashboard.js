@@ -7,6 +7,7 @@ module.exports = function () {
   <head>
     <meta charset="utf-8">
     <title>Waline 管理系统</title>
+    <link rel="icon" href="https://waline.js.org/favicon.ico">
     <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
