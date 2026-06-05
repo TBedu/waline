@@ -1,13 +1,9 @@
 const path = require('node:path');
 
 module.exports = class extends think.Controller {
-  static get _REST() {
-    return true;
-  }
+  static _REST = true;
 
-  static get _method() {
-    return 'method';
-  }
+  static _method = 'method';
 
   constructor(ctx) {
     super(ctx);
@@ -21,7 +17,7 @@ module.exports = class extends think.Controller {
     const filename = this.__filename || __filename;
     const last = filename.lastIndexOf(path.sep);
 
-    return filename.slice(last + 1, - 3);
+    return filename.slice(last + 1, -3);
   }
 
   getId() {
@@ -32,7 +28,7 @@ module.exports = class extends think.Controller {
     }
 
     const last = decodeURIComponent(this.ctx.path.split('/').pop());
-    if (last !== this.resource && /^([a-z0-9]+,?)*$/i.test(last)) {
+    if (last !== this.resource && /^([a-z0-9]+,?)*$/iu.test(last)) {
       return last;
     }
 
