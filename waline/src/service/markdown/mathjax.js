@@ -10,7 +10,6 @@ const { escapeHtml } = require('./utils');
 
 const mathjaxPlugin = (md) => {
   const adaptor = liteAdaptor();
-
   RegisterHTMLHandler(adaptor);
 
   const packages = AllPackages.sort();
@@ -24,7 +23,7 @@ const mathjaxPlugin = (md) => {
     let svg = adaptor.innerHTML(node);
 
     if (svg.includes('data-mml-node="merror"')) {
-      const errorTitle = svg.match(/<title>(.*?)<\/title>/)[1];
+      const [, errorTitle] = svg.match(/<title>(.*?)<\/title>/u);
 
       svg = `<span class='mathjax-error' title='${escapeHtml(
         errorTitle,
@@ -39,13 +38,13 @@ const mathjaxPlugin = (md) => {
     let svg = adaptor.innerHTML(node);
 
     if (svg.includes('data-mml-node="merror"')) {
-      const errorTitle = svg.match(/<title>(.*?)<\/title>/)[1];
+      const [, errorTitle] = svg.match(/<title>(.*?)<\/title>/u);
 
       svg = `<p class='mathjax-block mathjax-error' title='${escapeHtml(
         errorTitle,
       )}'>${escapeHtml(tex)}</p>`;
     } else {
-      svg = svg.replace(/(width=".*?")/, 'width="100%"');
+      svg = svg.replace(/(width=".*?")/u, 'width="100%"');
     }
 
     return svg;
