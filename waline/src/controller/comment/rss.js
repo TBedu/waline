@@ -5,7 +5,7 @@ const { think } = require('thinkjs');
 
 const markdownParser = getMarkdownParser(think.config('markdown'));
 
-const isHttpUrl = (value) => /^(https?:)?\/\//iu.test(value);
+const isHttpUrl = (value) => /^(?:https?:)?\/\//iu.test(value);
 
 const buildAbsoluteUrl = (baseUrl, path) => {
   if (!path) return baseUrl || '';
@@ -120,12 +120,13 @@ module.exports = class extends BaseRest {
       );
     }
 
+    const md = await markdownParser;
     const items = comments.map((comment) => {
       const user = users.find(({ objectId }) => objectId === comment.user_id);
       const nick = user?.display_name || comment.nick || 'Anonymous';
       const commentUrl = buildAbsoluteUrl(siteUrl, comment.url);
       const itemLink = commentUrl ? `${commentUrl}#${comment.objectId}` : '';
-      const description = markdownParser(comment.comment || '');
+      const description = md(comment.comment || '');
 
       return {
         title: `${nick} commented${comment.url ? ` on ${comment.url}` : ''}`,

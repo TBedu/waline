@@ -1,6 +1,7 @@
 const cloudbase = require('@cloudbase/node-sdk');
 
 const Base = require('./base.js');
+const { normalizeOrder } = require('./order.js');
 
 const { TCB_ENV, TCB_ID, TCB_KEY } = process.env;
 const app = cloudbase.init({
@@ -129,12 +130,16 @@ module.exports = class extends Base {
     return instance[method](_[where._complex._logic](...filters));
   }
 
-  async _select(where, { desc, limit, offset, field } = {}) {
+  async _select(where, { desc, field, limit, offset, order } = {}) {
     let instance = await this.collection(this.tableName);
 
     instance = this.where(instance, where);
-    if (desc) {
-      instance = instance.orderBy(desc, 'desc');
+    const normalizedOrder = normalizeOrder(order, desc, (orderField) =>
+      orderField === 'objectId' ? '_id' : orderField,
+    );
+
+    for (const { field: orderField, direction } of normalizedOrder) {
+      instance = instance.orderBy(orderField, direction);
     }
 
     if (limit) {
@@ -164,13 +169,22 @@ module.exports = class extends Base {
     const data = [];
     let ret = [];
     const offset = options.offset ?? 0;
+    const { limit } = options;
 
-    do {
-      options.offset = offset + data.length;
+    while (true) {
+      const remaining = limit == null ? undefined : limit - data.length;
+      const batchLimit = remaining == null ? undefined : Math.min(remaining, 100);
+
       // oxlint-disable-next-line no-underscore-dangle
-      ret = await this._select(where, options);
+      ret = await this._select(where, {
+        ...options,
+        limit: batchLimit,
+        offset: offset + data.length,
+      });
       data.push(...ret);
-    } while (ret.length === 100);
+
+      if (ret.length < 100 || (limit != null && data.length >= limit)) break;
+    }
 
     return data;
   }

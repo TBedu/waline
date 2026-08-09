@@ -20,7 +20,7 @@ module.exports = class NotifyService extends think.Service {
         config.service = SMTP_SERVICE;
       } else {
         config.host = SMTP_HOST;
-        config.port = Number.parseInt(SMTP_PORT, 10);
+        config.port = Math.trunc(Number(SMTP_PORT));
         config.secure = SMTP_SECURE && SMTP_SECURE !== 'false';
       }
       this.transporter = nodemailer.createTransport(config);
@@ -109,7 +109,7 @@ module.exports = class NotifyService extends think.Service {
 
     const QYWX_AM_AY = QYWX_AM.split(',');
     const comment = self.comment
-      .replaceAll(/<a href="(.*?)">(.*?)<\/a>/gu, '\n[$2] $1\n')
+      .replaceAll(/<a href="(?<url>.*?)">(?<text>.*?)<\/a>/gu, '\n[$2] $1\n')
       .replaceAll(/<[^>]+>/gu, '');
     const postName = self.url;
 
@@ -190,7 +190,7 @@ module.exports = class NotifyService extends think.Service {
     }
 
     const comment = self.comment
-      .replaceAll(/<a href="(.*?)">(.*?)<\/a>/gu, '')
+      .replaceAll(/<a href="(?:.*?)">(?:.*?)<\/a>/gu, '')
       .replaceAll(/<[^>]+>/gu, '');
 
     const data = {
@@ -246,12 +246,12 @@ module.exports = class NotifyService extends think.Service {
     }
 
     let commentLink = '';
-    const href = self.comment.match(/<a href="(.*?)">(.*?)<\/a>/gu);
+    const href = self.comment.match(/<a href="(?:.*?)">(?:.*?)<\/a>/gu);
 
     if (href != null) {
       for (let i = 0; i < href.length; i++) {
         href[i] =
-          `[Link: ${href[i].replaceAll(/<a href="(.*?)">(.*?)<\/a>/gu, '$2')}](${href[i].replaceAll(/<a href="(.*?)">(.*?)<\/a>/gu, '$1')})  `;
+          `[Link: ${href[i].replaceAll(/<a href="(?<url>.*?)">(?<text>.*?)<\/a>/gu, '$2')}](${href[i].replaceAll(/<a href="(?<url>.*?)">(?<text>.*?)<\/a>/gu, '$1')})  `;
         commentLink += href[i];
       }
     }
@@ -260,7 +260,7 @@ module.exports = class NotifyService extends think.Service {
     }
 
     const comment = self.comment
-      .replaceAll(/<a href="(.*?)">(.*?)<\/a>/gu, '[Link:$2]')
+      .replaceAll(/<a href="(?<url>.*?)">(?<text>.*?)<\/a>/gu, '[Link:$2]')
       .replaceAll(/<[^>]+>/gu, '');
 
     const contentTG =
@@ -399,14 +399,14 @@ module.exports = class NotifyService extends think.Service {
       data,
     );
 
-    const form = new FormData();
-
-    form.append('content', `${title}\n${content}`);
-
     return fetch(DISCORD_WEBHOOK, {
       method: 'POST',
-      headers: form.getHeaders(),
-      body: form,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: `${title}\n${content}`,
+      }),
     }).then((resp) => resp.statusText);
     // Expected return value: No Content
     // Since Discord doesn't return any response body on success, we just return the status text.
@@ -419,7 +419,7 @@ module.exports = class NotifyService extends think.Service {
       return false;
     }
 
-    self.comment = self.comment.replaceAll(/(<([^>]+)>)/giu, '');
+    self.comment = self.comment.replaceAll(/(?:<[^>]+>)/giu, '');
 
     const data = {
       self,
@@ -466,7 +466,7 @@ module.exports = class NotifyService extends think.Service {
     };
 
     if (LARK_SECRET) {
-      const timestamp = Number.parseInt(Date.now() / 1000, 10);
+      const timestamp = Math.trunc(Number(Date.now() / 1000));
 
       signData = { timestamp, sign: sign(timestamp, LARK_SECRET) };
     }
